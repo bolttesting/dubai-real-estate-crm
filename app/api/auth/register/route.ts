@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const hash = await bcrypt.hash(password, 10)
     await prisma.user.create({ data: { email, name, password: hash, subscription: 'STARTER' } })
     return new Response('ok', { status: 201 })
-  } catch (e) {
+  } catch {
     return new Response('Error', { status: 500 })
   }
 }
