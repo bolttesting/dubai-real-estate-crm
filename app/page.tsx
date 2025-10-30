@@ -1,3 +1,20 @@
+import Link from 'next/link'
+
+export default function Home() {
+  return (
+    <main className="min-h-screen grid place-items-center p-8">
+      <div className="max-w-xl w-full text-center space-y-6">
+        <h1 className="text-2xl font-semibold">Dubai Real Estate CRM</h1>
+        <p className="text-gray-600">Manage properties, tenants, leads and contracts.</p>
+        <div className="flex justify-center gap-4">
+          <Link className="px-4 py-2 rounded bg-black text-white" href="/login">Login</Link>
+          <Link className="px-4 py-2 rounded border" href="/dashboard">Go to Dashboard</Link>
+        </div>
+      </div>
+    </main>
+  )
+}
+
 import Image from "next/image";
 
 export default function Home() {
