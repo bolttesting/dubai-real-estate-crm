@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 // Disable prerendering to avoid DB access at build time on Vercel
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+export const runtime = 'nodejs'
 
 export default async function HomePage() {
   const properties = await prisma.property.findMany({
