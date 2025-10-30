@@ -1,0 +1,336 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+ 
+// Enums
+enum SubscriptionTier {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum PropertyType {
+  RESIDENTIAL
+  COMMERCIAL
+  INDUSTRIAL
+  LAND
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  RENTED
+  SOLD
+  UNDER_MAINTENANCE
+  OFF_MARKET
+}
+
+enum PriceType {
+  SALE
+  RENT
+}
+
+enum PaymentFrequency {
+  MONTHLY
+  YEARLY
+  QUARTERLY
+}
+
+enum CoolingType {
+  DISTRICT_COOLING
+  SPLIT_UNITS
+  CENTRAL_A_C
+  CHILLER_FREE
+}
+
+enum VisaStatus {
+  RESIDENCY
+  VISIT
+  TOURIST
+  EMPLOYMENT
+}
+
+enum LeadSource {
+  PROPERTY_FINDER
+  BAYUT
+  DUBAI_ZZ
+  SOCIAL_MEDIA
+  REFERRAL
+  WEBSITE
+  WALK_IN
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  VIEWING_SCHEDULED
+  OFFER_MADE
+  NEGOTIATION
+  CONTRACT_SENT
+  DEAL_CLOSED
+  LOST
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ContractType {
+  LEASE
+  SALE
+  MANAGEMENT
+}
+
+enum DocumentType {
+  PASSPORT
+  VISA
+  EMIRATES_ID
+  TITLE_DEED
+  EJARI
+  DEWA_BILL
+  CONTRACT
+  OTHER
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  name          String
+  phone         String?
+  company       String?
+  licenseNumber String?
+  subscription  SubscriptionTier @default(STARTER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  properties Property[]
+  tenants    Tenant[]
+  leads      Lead[]
+  contracts  Contract[]
+  documents  Document[]
+
+  accounts   Account[]
+  sessions   Session[]
+}
+
+model Property {
+  id          String   @id @default(cuid())
+  title       String
+  type        PropertyType
+  subType     String?
+  status      PropertyStatus @default(AVAILABLE)
+  
+  // Dubai Location Details
+  emirate     String   @default("Dubai")
+  community   String
+  building    String?
+  floor       Int?
+  unitNumber  String?
+  fullAddress String?
+  
+  // Property Specifications
+  bedrooms    Int?
+  bathrooms   Int?
+  parking     Int?
+  sizeSqFt    Float?
+  sizeSqM     Float?
+  
+  // Pricing
+  priceAED    Float
+  priceType   PriceType
+  paymentFrequency PaymentFrequency?
+  
+  // Dubai Specific
+  permitNumber String?
+  reraPermit   String?
+  dewaAccount  String?
+  coolingType  CoolingType?
+  
+  // Media
+  images      String[]
+  videos      String[]
+  floorPlans  String[]
+  
+  // Amenities
+  amenities   String[]
+  
+  // Relationships
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenants     Tenant[]
+  contracts   Contract[]
+  leads       Lead[]
+  documents   Document[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("properties")
+}
+
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String
+  nationality String?
+  emiratesId  String?
+  passportNumber String?
+  visaStatus  VisaStatus?
+  
+  // Contract Details
+  leaseStart  DateTime
+  leaseEnd    DateTime
+  rentAmount  Float
+  paymentDay  Int?
+  securityDeposit Float?
+  agencyFees  Float?
+  
+  // Dubai Specific
+  ejariNumber String?
+  dewaNumber  String?
+  
+  // Relationships
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contracts   Contract[]
+  documents   Document[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("tenants")
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String
+  source      LeadSource
+  budget      Float?
+  preferredLocation String?
+  propertyType PropertyType?
+  bedrooms    Int?
+  
+  // Lead Status
+  status      LeadStatus @default(NEW)
+  priority    Priority @default(MEDIUM)
+  notes       String?
+  
+  // Relationships
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId  String?
+  property    Property? @relation(fields: [propertyId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("leads")
+}
+
+model Contract {
+  id          String   @id @default(cuid())
+  type        ContractType
+  startDate   DateTime
+  endDate     DateTime
+  amount      Float
+  commission  Float?
+  
+  // Dubai Specific
+  ejariNumber String?
+  reraFormNumber String?
+  
+  // Parties
+  landlordName String
+  landlordId   String?
+  tenantName   String
+  tenantId     String?
+  tenant       Tenant?  @relation(fields: [tenantId], references: [id])
+  
+  // Relationships
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("contracts")
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  name        String
+  type        DocumentType
+  url         String
+  description String?
+  
+  // Relationships
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId  String?
+  property    Property? @relation(fields: [propertyId], references: [id])
+  tenantId    String?
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("documents")
+}
+
+// NextAuth models
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
