@@ -1,6 +1,10 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
 
+// Disable prerendering to avoid DB access at build time on Vercel
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function HomePage() {
   const properties = await prisma.property.findMany({
     orderBy: { createdAt: 'desc' },
