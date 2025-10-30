@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
 
-export default async function Home() {
+export default async function HomePage() {
   const properties = await prisma.property.findMany({
     orderBy: { createdAt: 'desc' },
     take: 12,
